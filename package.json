@@ -2,8 +2,8 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "test": "light test --projectName pspPaymentStreaming --programAddress Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
-        "build": "light build --name pspPaymentStreaming"
+        "test": "light test --projectName psp_payment_streaming --programAddress Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+        "build": "light build --name psp_payment_streaming"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.27.0",
