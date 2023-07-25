@@ -1529,6 +1529,7 @@ dependencies = [
 [[package]]
 name = "light-verifier-sdk"
 version = "0.1.0"
+source = "git+https://github.com/lightprotocol/light-protocol?tag=v0.3.1#402d6b8fc4701e46142beb965390725d7935a659"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -1586,6 +1587,7 @@ dependencies = [
 [[package]]
 name = "merkle_tree_program"
 version = "0.1.0"
+source = "git+https://github.com/lightprotocol/light-protocol?tag=v0.3.1#402d6b8fc4701e46142beb965390725d7935a659"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
@@ -2704,6 +2706,7 @@ checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
 [[package]]
 name = "verifier_program_two"
 version = "0.1.0"
+source = "git+https://github.com/lightprotocol/light-protocol?tag=v0.3.1#402d6b8fc4701e46142beb965390725d7935a659"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

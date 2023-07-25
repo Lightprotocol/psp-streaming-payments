@@ -2,14 +2,14 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "test": "../light-protocol/cli/build/cli.js test --projectName psp_payment_streaming --programAddress Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
-        "build": "../light-protocol/cli/build/cli.js build --name psp_payment_streaming"
+        "test": "light test --projectName psp_payment_streaming --programAddress Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+        "build": "light build --name psp_payment_streaming"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.27.0",
         "circomlib": "^2.0.5",
         "circomlibjs": "^0.1.7",
-        "@lightprotocol/zk.js": "file:../light-protocol/light-zk.js"
+        "@lightprotocol/zk.js": "0.3.2-alpha.10"
     },
     "devDependencies": {
         "chai": "^4.3.4",

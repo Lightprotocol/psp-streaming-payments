@@ -18,12 +18,9 @@ default = []
 [dependencies]
 anchor-lang = "0.28.0"
 anchor-spl = "0.28.0"
-# merkle_tree_program = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], rev = "a76187f450cb946881e2ca598027dfa850acaa38" }
-# verifier_program_two = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], rev = "a76187f450cb946881e2ca598027dfa850acaa38" }
-merkle_tree_program = { path = "../../../light-protocol/light-system-programs/programs/merkle_tree_program", features = ["cpi"] }
-verifier_program_two = { path = "../../../light-protocol/light-system-programs/programs/verifier_program_two", features = ["cpi"] }
+merkle_tree_program = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], tag = "v0.3.1" }
+verifier_program_two = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], tag = "v0.3.1" }
+light-verifier-sdk = { git = "https://github.com/lightprotocol/light-protocol", tag = "v0.3.1" }
 light-macros = "0.1.0"
-# light-verifier-sdk = { git = "https://github.com/lightprotocol/light-protocol", rev = "a76187f450cb946881e2ca598027dfa850acaa38" }
-light-verifier-sdk = {path = "../../../light-protocol/light-verifier-sdk"}
 solana-program = "1.16.4"
 groth16-solana = "0.0.2"
