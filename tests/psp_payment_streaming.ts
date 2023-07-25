@@ -1,33 +1,30 @@
 import * as anchor from "@coral-xyz/anchor";
+import {BN} from "@coral-xyz/anchor";
 import {assert} from "chai"
 import {
-  Utxo,
+  Account,
+  Action,
+  airdropSol,
+  confirmConfig,
+  ConfirmOptions,
+  IDL_VERIFIER_PROGRAM_TWO,
+  LOOK_UP_TABLE,
+  ProgramUtxoBalance,
+  Provider as LightProvider,
+  TestRelayer,
   Transaction,
   TRANSACTION_MERKLE_TREE_KEY,
   TransactionParameters,
-  Provider as LightProvider,
-  confirmConfig,
-  Action,
-  IDL_VERIFIER_PROGRAM_TWO,
   User,
-  ProgramUtxoBalance,
-  airdropSol,
-  TestRelayer,
-  LOOK_UP_TABLE,
+  Utxo,
   verifierProgramStorageProgramId,
-  verifierProgramTwoProgramId,
-  Account
+  verifierProgramTwoProgramId
 } from "@lightprotocol/zk.js";
-import {
-  Keypair as SolanaKeypair,
-  SystemProgram,
-  PublicKey,
-  Keypair,
-} from "@solana/web3.js";
+import {Keypair as SolanaKeypair, Keypair, PublicKey, SystemProgram,} from "@solana/web3.js";
 
-import { buildPoseidonOpt } from "circomlibjs";
-import { BN } from "@coral-xyz/anchor";
-import { IDL } from "../target/types/psp_payment_streaming";
+import {buildPoseidonOpt} from "circomlibjs";
+import {IDL} from "../target/types/psp_payment_streaming";
+
 const path = require("path");
 
 const verifierProgramId = new PublicKey(
@@ -53,12 +50,17 @@ describe("psp_payment_streaming", () => {
     const wallet = Keypair.generate();
     await airdropSol({
       provider,
-      lamports: 10_000_000,
+      lamports: 1e9,
       recipientPublicKey: wallet.publicKey,
     });
 
 
     const relayerRecipientSol = SolanaKeypair.generate().publicKey;
+    await airdropSol( {
+        provider,
+        lamports: 1e9,
+        recipientPublicKey: relayerRecipientSol
+    });
     let relayer = new TestRelayer({
       relayerPubkey: wallet.publicKey,
       lookUpTable: LOOK_UP_TABLE,
@@ -77,7 +79,7 @@ describe("psp_payment_streaming", () => {
       assets: [SystemProgram.programId],
       account: user.account,
       amounts: [new BN(1_000_000)],
-      appData: { releaseSlot: new BN(1) },
+      appData: { endSlot: new BN(1), rate: new BN(1) },
       appDataIdl: IDL,
       verifierAddress: verifierProgramId,
       assetLookupTable: lightProvider.lookUpTables.assetLookupTable,
@@ -89,13 +91,15 @@ describe("psp_payment_streaming", () => {
       action: Action.SHIELD,
     };
 
-    await user.storeAppUtxo({
+    let result = await user.storeAppUtxo({
       appUtxo: testInputsShield.utxo,
       action: testInputsShield.action,
     });
+    console.log(result);
+    
+    const programUtxoBalance: Map<string, ProgramUtxoBalance> = await user.syncStorage(IDL);
+    console.log(programUtxoBalance);
 
-    const programUtxoBalance: Map<string, ProgramUtxoBalance> =
-      await user.syncStorage(IDL);
     const shieldedUtxoCommitmentHash =
       testInputsShield.utxo.getCommitment(POSEIDON);
     const inputUtxo = programUtxoBalance
@@ -107,7 +111,15 @@ describe("psp_payment_streaming", () => {
 
     const circuitPath = path.join("build-circuit");
     const appParams = {
-      inputs: { releaseSlot: new BN(1), currentSlot: new BN(1) },
+      inputs: {
+        endSlot: new BN(1),
+        rate: new BN(1),
+        currentSlotPrivate: new BN(1),
+        diff: new BN(0),
+        currentSlot: new BN(1),
+        remainingAmount: new BN(0),
+        isOutUtxo: [new BN(0), new BN(0), new BN(0), new BN(0)]
+      },
       path: circuitPath,
       verifierIdl: IDL,
     };
@@ -129,9 +141,9 @@ describe("psp_payment_streaming", () => {
       appParams,
     });
 
-    await tx.compile();
-    await tx.getProof();
-    await tx.getAppProof();
+    await tx.compileAndProve();
+    // await tx.getProof();
+    // await tx.getAppProof();
     let signature = await tx.sendAndConfirmTransaction();
     console.log("signature ", signature);
   });
@@ -147,6 +159,12 @@ describe("psp_payment_streaming", () => {
     // let relayer = new TestRelayer(wallet.publicKey, LOOK_UP_TABLE, wallet.publicKey, new BN(100000))
 
     const relayerRecipientSol = SolanaKeypair.generate().publicKey;
+    await airdropSol({
+      provider,
+      lamports: 10_000_000_000,
+      recipientPublicKey: relayerRecipientSol,
+    });
+
     let relayer = new TestRelayer({
       relayerPubkey: wallet.publicKey,
       lookUpTable: LOOK_UP_TABLE,
@@ -332,6 +350,7 @@ describe("psp_payment_streaming", () => {
       appUtxo: inUtxo,
       programParameters,
       action,
+      confirmOptions: ConfirmOptions.spendable
     });
     const balance = await user.getBalance();
     console.log("totalSolBalance ", balance.totalSolBalance.toString());

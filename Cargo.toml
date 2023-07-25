@@ -11,9 +11,3 @@ codegen-units = 1
 opt-level = 3
 incremental = false
 codegen-units = 1
-
-[patch.crates-io]
-anchor-lang = { git = "https://github.com/Lightprotocol/anchor", branch = "v0.26.0-deps-version-fix" }
-anchor-spl = { git = "https://github.com/Lightprotocol/anchor", branch = "v0.26.0-deps-version-fix" }
-solana-program = { git = "https://github.com/Lightprotocol/solana", branch="v1.15" }
-solana-zk-token-sdk = { git = "https://github.com/Lightprotocol/solana", branch="v1.15" }
