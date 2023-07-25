@@ -95,11 +95,7 @@ describe("psp_payment_streaming", () => {
       appUtxo: testInputsShield.utxo,
       action: testInputsShield.action,
     });
-    console.log(result);
-    
     const programUtxoBalance: Map<string, ProgramUtxoBalance> = await user.syncStorage(IDL);
-    console.log(programUtxoBalance);
-
     const shieldedUtxoCommitmentHash =
       testInputsShield.utxo.getCommitment(POSEIDON);
     const inputUtxo = programUtxoBalance
