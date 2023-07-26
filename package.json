@@ -2,13 +2,14 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "test": "ts-mocha --resolveJsonModule ./tsconfig.json -t 100000000 tests/psp-payment-streaming.ts --exit"
+        "test": "light test --projectName psp_payment_streaming --programAddress Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+        "build": "light build --name psp_payment_streaming"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.27.0",
         "circomlib": "^2.0.5",
         "circomlibjs": "^0.1.7",
-        "light-sdk": "file:../light-sdk-ts"
+        "@lightprotocol/zk.js": "0.3.2-alpha.11"
     },
     "devDependencies": {
         "chai": "^4.3.4",
