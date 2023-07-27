@@ -8,7 +8,7 @@ The code demonstrates a private streaming payment system on the Solana blockchai
 Before running the code, ensure that you have the following installed on your machine:
 – node.js, yarn
 - circom
-- solana-cli 
+- solana-cli >=1.16.4
 
 ## Overview
 
