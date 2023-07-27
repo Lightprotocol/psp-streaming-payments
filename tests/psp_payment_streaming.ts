@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import {BN} from "@coral-xyz/anchor";
-import {assert} from "chai"
+import {assert} from "chai";
 import {
   Account,
   Action,
@@ -34,7 +34,7 @@ let POSEIDON;
 
 const RPC_URL = "http://127.0.0.1:8899";
 
-describe("psp_payment_streaming", () => {
+describe("Streaming Payments tests", () => {
   process.env.ANCHOR_PROVIDER_URL = RPC_URL;
   process.env.ANCHOR_WALLET = process.env.HOME + "/.config/solana/id.json";
 
@@ -44,16 +44,34 @@ describe("psp_payment_streaming", () => {
 
   before(async () => {
     POSEIDON = await buildPoseidonOpt();
+
+    await airdropSol({
+      provider,
+      lamports: 1e9,
+      recipientPublicKey: Transaction.getRegisteredVerifierPda(
+          TRANSACTION_MERKLE_TREE_KEY,
+          verifierProgramStorageProgramId
+      ),
+    });
+
+    await airdropSol({
+      provider,
+      lamports: 1e9,
+      recipientPublicKey: Transaction.getRegisteredVerifierPda(
+          TRANSACTION_MERKLE_TREE_KEY,
+          verifierProgramTwoProgramId
+      ),
+    });
+
   });
 
-  it("Create and Spend Program Utxo ", async () => {
+  it("Create and Spend Program Utxo", async () => {
     const wallet = Keypair.generate();
     await airdropSol({
       provider,
       lamports: 1e9,
       recipientPublicKey: wallet.publicKey,
     });
-
 
     const relayerRecipientSol = SolanaKeypair.generate().publicKey;
     await airdropSol( {
@@ -72,12 +90,12 @@ describe("psp_payment_streaming", () => {
     // The light provider is a connection and wallet abstraction.
     // The wallet is used to derive the seed for your shielded keypair with a signature.
     const lightProvider = await LightProvider.init({ wallet, url: RPC_URL, relayer });
-    const user: User = await User.init({ provider: lightProvider });
+    const lightUser: User = await User.init({ provider: lightProvider });
 
     const outputUtxoSol = new Utxo({
       poseidon: POSEIDON,
       assets: [SystemProgram.programId],
-      account: user.account,
+      account: lightUser.account,
       amounts: [new BN(1_000_000)],
       appData: { endSlot: new BN(1), rate: new BN(1) },
       appDataIdl: IDL,
@@ -91,11 +109,11 @@ describe("psp_payment_streaming", () => {
       action: Action.SHIELD,
     };
 
-    let result = await user.storeAppUtxo({
+    await lightUser.storeAppUtxo({
       appUtxo: testInputsShield.utxo,
       action: testInputsShield.action,
     });
-    const programUtxoBalance: Map<string, ProgramUtxoBalance> = await user.syncStorage(IDL);
+    const programUtxoBalance: Map<string, ProgramUtxoBalance> = await lightUser.syncStorage(IDL);
     const shieldedUtxoCommitmentHash =
       testInputsShield.utxo.getCommitment(POSEIDON);
     const inputUtxo = programUtxoBalance
@@ -120,7 +138,6 @@ describe("psp_payment_streaming", () => {
       verifierIdl: IDL,
     };
 
-
     const txParams = new TransactionParameters({
       inputUtxos: [inputUtxo],
       transactionMerkleTreePubkey: TRANSACTION_MERKLE_TREE_KEY,
@@ -138,26 +155,22 @@ describe("psp_payment_streaming", () => {
     });
 
     await tx.compileAndProve();
-    // await tx.getProof();
-    // await tx.getAppProof();
-    let signature = await tx.sendAndConfirmTransaction();
-    console.log("signature ", signature);
+    await tx.sendAndConfirmTransaction();
   });
 
-  it("payment streaming ", async () =>{
+  it("Payment streaming", async () =>{
     const circuitPath = path.join("build-circuit");
     const wallet = Keypair.generate(); // ADMIN_AUTH_KEYPAIR;
     await airdropSol({
       provider,
-      lamports: 10_000_000_000,
+      lamports: 1e10,
       recipientPublicKey: wallet.publicKey,
     });
-    // let relayer = new TestRelayer(wallet.publicKey, LOOK_UP_TABLE, wallet.publicKey, new BN(100000))
 
     const relayerRecipientSol = SolanaKeypair.generate().publicKey;
     await airdropSol({
       provider,
-      lamports: 10_000_000_000,
+      lamports: 1e10  ,
       recipientPublicKey: relayerRecipientSol,
     });
 
@@ -169,28 +182,12 @@ describe("psp_payment_streaming", () => {
       payer: wallet,
     });
 
-    await airdropSol({
-      provider,
-      lamports: 1_000_000_000,
-      recipientPublicKey: Transaction.getRegisteredVerifierPda(
-        TRANSACTION_MERKLE_TREE_KEY,
-        verifierProgramStorageProgramId
-      ),
-    });
-    await airdropSol({
-      provider,
-      lamports: 1_000_000_000,
-      recipientPublicKey: Transaction.getRegisteredVerifierPda(
-        TRANSACTION_MERKLE_TREE_KEY,
-        verifierProgramTwoProgramId
-      ),
-    });
     // The light provider is a connection and wallet abstraction.
     // The wallet is used to derive the seed for your shielded keypair with a signature.
     const lightProvider = await LightProvider.init({ wallet, url: RPC_URL, relayer });
-    const user: User = await User.init({ provider: lightProvider });
+    const lightUser: User = await User.init({ provider: lightProvider });
 
-    // user account give account aes key
+    // lightUser account give account aes key
     class PaymentStreamClient {
       idl: anchor.Idl;
       endSlot?: BN;
@@ -304,23 +301,17 @@ describe("psp_payment_streaming", () => {
           return {programParameters, outUtxo, inUtxo};
         }
       }
-
-      updateLatestStreamUtxo(latestStreamUtxo: Utxo) {
-        this.latestStreamUtxo = latestStreamUtxo;
-      }
     }
 
     type ProgramParameters = {
       verifierIdl: anchor.Idl,
       inputs: any // object of proof and other inputs
-      // proofInputs:
-      // instructionInputs: 
       path: string
     }
     let client: PaymentStreamClient = new PaymentStreamClient(IDL, POSEIDON, circuitPath);
     const currentSlot = await provider.connection.getSlot("confirmed");
     const duration = 1;
-    const streamInitUtxo = client.setupSolStream(new BN(1e9), new BN(duration),new BN(currentSlot), user.account);
+    const streamInitUtxo = client.setupSolStream(new BN(1e9), new BN(duration),new BN(currentSlot), lightUser.account);
 
     const testInputsSol1 = {
       utxo: streamInitUtxo,
@@ -329,40 +320,33 @@ describe("psp_payment_streaming", () => {
     }
 
     console.log("storing streamInitUtxo");
-    await user.storeAppUtxo({
+    await lightUser.storeAppUtxo({
       appUtxo: testInputsSol1.utxo,
       action: testInputsSol1.action,
     });
-    await user.syncStorage(IDL);
+    await lightUser.syncStorage(IDL);
     const commitment = testInputsSol1.utxo.getCommitment(testInputsSol1.poseidon);
-    const utxo = (await user.getUtxo(commitment))!;
+    const utxo = (await lightUser.getUtxo(commitment))!;
     assert.equal(utxo.status,"ready");
     Utxo.equal(POSEIDON, utxo.utxo, testInputsSol1.utxo, true);
     const currentSlot1 = await provider.connection.getSlot("confirmed");
 
     const {programParameters, inUtxo, outUtxo, action} = client.collectStream(new BN(currentSlot1), Action.TRANSFER);
 
-    await user.executeAppUtxo({
+    await lightUser.executeAppUtxo({
       appUtxo: inUtxo,
       programParameters,
       action,
       confirmOptions: ConfirmOptions.spendable
     });
-    const balance = await user.getBalance();
+    const balance = await lightUser.getBalance();
     console.log("totalSolBalance ", balance.totalSolBalance.toString());
     assert.equal(outUtxo.amounts[0].toString(), balance.totalSolBalance.toString());
     console.log("inUtxo commitment: ", inUtxo.getCommitment(POSEIDON));
-    
-    // user.getProgramUtxoBalance(optionalAsset)
-    // user.getUtxo(commitmentHash)
-    // const programUtxos = await user.getProgramUtxos({idl: IDL});
-    // const res1: Map<string, ProgramUtxoBalance> = await user.syncStorage(IDL);
-    // console.log(res1);
 
     const spentCommitment = testInputsSol1.utxo.getCommitment(testInputsSol1.poseidon);
-    const utxoSpent = (await user.getUtxo(spentCommitment, true, IDL))!;
+    const utxoSpent = (await lightUser.getUtxo(spentCommitment, true, IDL))!;
     assert.equal(utxoSpent.status,"spent");
-
-  })
+  });
   
 });
