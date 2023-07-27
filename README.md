@@ -8,6 +8,8 @@ The code demonstrates a private streaming payment system on the Solana blockchai
 Before running the code, ensure that you have the following installed on your machine:
 – node.js, yarn
 - circom
+- rust
+- cargo-expand (```cargo install cargo-expand```)
 - solana-cli >=1.16.4
 
 ## Overview
@@ -47,3 +49,14 @@ The tests will run and output the results, demonstrating the functionality of th
 
 Please note that this code is a test suite and may require additional configuration or modifications to work with a specific Solana network or production environment. 
 It is recommended to use the provided code as a reference and adapt it to suit your specific use case or requirements.
+
+## Common errors
+
+- __error: package `solana-program v1.16.5` cannot be built because it requires rustc 1.68.0 or newer, while the currently active rustc version is 1.65.0-dev__
+
+  Please install [solana-cli 1.16.4](https://docs.solana.com/cli/install-solana-cli-tools) or newer.
+
+
+- __error: no such command: `expand`__
+
+  Please install cargo-expand: `cargo install cargo-expand`.
